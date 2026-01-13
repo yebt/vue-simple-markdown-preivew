@@ -1,11 +1,20 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+
 defineProps<{
   modelValue: string
 }>()
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'update:modelValue', value: string): void
+  (e: 'scroll', event: Event): void
 }>()
+
+const textareaRef = ref<HTMLTextAreaElement | null>(null)
+
+defineExpose({
+  textarea: textareaRef,
+})
 </script>
 
 <template>
@@ -19,8 +28,10 @@ defineEmits<{
       <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Editor de Markdown</span>
     </div>
     <textarea
+      ref="textareaRef"
       :value="modelValue"
       @input="$emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
+      @scroll="$emit('scroll', $event)"
       class="flex-1 w-full p-4 bg-transparent resize-none focus:outline-none text-gray-800 dark:text-gray-200 font-mono text-sm leading-relaxed"
       placeholder="Escribe tu markdown aquí..."
     ></textarea>

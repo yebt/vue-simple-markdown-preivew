@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps<{
   html: string
@@ -7,11 +7,18 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'copy'): void
+  (e: 'scroll', event: Event): void
 }>()
+
+const previewRef = ref<HTMLDivElement | null>(null)
 
 const displayHtml = computed(
   () => props.html || '<p class="text-gray-400 italic">La vista previa aparecerá aquí...</p>',
 )
+
+defineExpose({
+  preview: previewRef,
+})
 </script>
 
 <template>
@@ -35,6 +42,8 @@ const displayHtml = computed(
       </button>
     </div>
     <div
+      ref="previewRef"
+      @scroll="$emit('scroll', $event)"
       class="flex-1 w-full p-4 overflow-y-auto prose dark:prose-invert max-w-none prose-sm sm:prose"
       v-html="displayHtml"
     ></div>

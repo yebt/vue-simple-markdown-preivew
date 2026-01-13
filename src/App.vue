@@ -29,6 +29,44 @@ onMounted(() => {
   }
 })
 
+const editorRef = ref<{ textarea: HTMLTextAreaElement } | null>(null)
+const previewRef = ref<{ preview: HTMLDivElement } | null>(null)
+
+// Flag to prevent infinite scroll loops
+const isScrolling = ref(false)
+
+const handleEditorScroll = () => {
+  if (isScrolling.value) return
+
+  const editor = editorRef.value?.textarea
+  const preview = previewRef.value?.preview
+
+  if (editor && preview) {
+    isScrolling.value = true
+    const percentage = editor.scrollTop / (editor.scrollHeight - editor.clientHeight)
+    if (!isNaN(percentage)) {
+      preview.scrollTop = percentage * (preview.scrollHeight - preview.clientHeight)
+    }
+    setTimeout(() => (isScrolling.value = false), 100)
+  }
+}
+
+const handlePreviewScroll = () => {
+  if (isScrolling.value) return
+
+  const editor = editorRef.value?.textarea
+  const preview = previewRef.value?.preview
+
+  if (editor && preview) {
+    isScrolling.value = true
+    const percentage = preview.scrollTop / (preview.scrollHeight - preview.clientHeight)
+    if (!isNaN(percentage)) {
+      editor.scrollTop = percentage * (editor.scrollHeight - editor.clientHeight)
+    }
+    setTimeout(() => (isScrolling.value = false), 100)
+  }
+}
+
 const copyToClipboard = async () => {
   if (!renderedHtml.value) return
 
@@ -80,8 +118,13 @@ const copyToClipboard = async () => {
       <div
         class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-12rem)] md:h-[calc(100vh-14rem)] min-h-[500px]"
       >
-        <MarkdownEditor v-model="markdown" />
-        <HtmlPreview :html="renderedHtml" @copy="copyToClipboard" />
+        <MarkdownEditor ref="editorRef" v-model="markdown" @scroll="handleEditorScroll" />
+        <HtmlPreview
+          ref="previewRef"
+          :html="renderedHtml"
+          @copy="copyToClipboard"
+          @scroll="handlePreviewScroll"
+        />
       </div>
     </main>
 

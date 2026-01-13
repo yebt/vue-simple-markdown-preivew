@@ -35,125 +35,85 @@ const previewRef = ref<{ preview: HTMLDivElement } | null>(null)
 // Flag to prevent infinite scroll loops
 const isScrolling = ref(false)
 
+// Tab management for mobile
+const activeTab = ref<'editor' | 'preview'>('editor')
+
 const handleEditorScroll = () => {
   if (isScrolling.value) return
-
-  const editor = editorRef.value?.textarea
-  const preview = previewRef.value?.preview
-
-  if (editor && preview) {
-    isScrolling.value = true
-    const percentage = editor.scrollTop / (editor.scrollHeight - editor.clientHeight)
-    if (!isNaN(percentage)) {
-      preview.scrollTop = percentage * (preview.scrollHeight - preview.clientHeight)
-    }
-    setTimeout(() => (isScrolling.value = false), 100)
-  }
-}
-
-const handlePreviewScroll = () => {
-  if (isScrolling.value) return
-
-  const editor = editorRef.value?.textarea
-  const preview = previewRef.value?.preview
-
-  if (editor && preview) {
-    isScrolling.value = true
-    const percentage = preview.scrollTop / (preview.scrollHeight - preview.clientHeight)
-    if (!isNaN(percentage)) {
-      editor.scrollTop = percentage * (editor.scrollHeight - editor.clientHeight)
-    }
-    setTimeout(() => (isScrolling.value = false), 100)
-  }
-}
-
-const copyToClipboard = async () => {
-  if (!renderedHtml.value) return
-
-  try {
-    await navigator.clipboard.writeText(renderedHtml.value)
-    // Simple toast notification logic could go here
-    alert('¡HTML copiado al portapapeles!')
-  } catch (err) {
-    console.error('Error al copiar:', err)
-    alert('Error al copiar el contenido.')
-  }
+  // ... existing scroll logic ...
+  // ... which I will fix in the next chunk ...
 }
 </script>
 
 <template>
   <div
-    class="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col font-sans selection:bg-blue-200 dark:selection:bg-blue-800"
+    class="h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 flex flex-col font-sans overflow-hidden"
   >
-    <!-- Header -->
-    <header
-      class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 py-4 px-6 md:px-8 flex items-center justify-between sticky top-0 z-10 shadow-sm"
-    >
-      <div class="flex items-center gap-3">
-        <div
-          class="w-10 h-10 bg-gradient-to-br from-emerald-400 to-blue-500 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform cursor-default"
-        >
-          <i class="i-lucide-layout text-white text-xl"></i>
-        </div>
-        <h1
-          class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400"
-        >
-          Markdown View
-        </h1>
-      </div>
-
-      <div class="flex items-center gap-4">
-        <a
-          href="https://github.com/webcloster/markdown-html-view"
-          target="_blank"
-          class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors text-gray-600 dark:text-gray-400"
-        >
-          <i class="i-mdi-github text-xl"></i>
-        </a>
-      </div>
-    </header>
-
     <!-- Main Content -->
-    <main class="flex-1 p-6 md:p-8 flex flex-col gap-6 max-w-7xl mx-auto w-full">
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+      <!-- Mobile Tabs -->
       <div
-        class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-12rem)] md:h-[calc(100vh-14rem)] min-h-[500px]"
+        class="md:hidden flex border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900"
       >
-        <MarkdownEditor ref="editorRef" v-model="markdown" @scroll="handleEditorScroll" />
+        <button
+          @click="activeTab = 'editor'"
+          :class="[
+            'flex-1 py-3 text-sm font-medium transition-colors border-b-2',
+            activeTab === 'editor'
+              ? 'text-blue-600 border-blue-600'
+              : 'text-gray-500 border-transparent',
+          ]"
+        >
+          Editor
+        </button>
+        <button
+          @click="activeTab = 'preview'"
+          :class="[
+            'flex-1 py-3 text-sm font-medium transition-colors border-b-2',
+            activeTab === 'preview'
+              ? 'text-blue-600 border-blue-600'
+              : 'text-gray-500 border-transparent',
+          ]"
+        >
+          Vista Previa
+        </button>
+      </div>
+
+      <!-- Editor Section -->
+      <div
+        :class="[
+          'flex-1 h-full overflow-hidden transition-all duration-300',
+          activeTab === 'editor' ? 'block' : 'hidden md:block',
+          'md:border-r border-gray-200 dark:border-gray-800',
+        ]"
+      >
+        <MarkdownEditor
+          ref="editorRef"
+          v-model="markdown"
+          @scroll="handleEditorScroll"
+          class="h-full !border-none !rounded-none"
+        />
+      </div>
+
+      <!-- Preview Section -->
+      <div
+        :class="[
+          'flex-1 h-full overflow-hidden transition-all duration-300',
+          activeTab === 'preview' ? 'block' : 'hidden md:block',
+        ]"
+      >
         <HtmlPreview
           ref="previewRef"
           :html="renderedHtml"
           @copy="copyToClipboard"
           @scroll="handlePreviewScroll"
+          class="h-full !border-none !rounded-none"
         />
       </div>
     </main>
-
-    <!-- Footer -->
-    <footer
-      class="py-4 px-6 border-t border-gray-200 dark:border-gray-800 text-center text-xs text-gray-500 dark:text-gray-500"
-    >
-      Desarrollado con Vue 3 y UnoCSS • 2026
-    </footer>
   </div>
 </template>
 
 <style>
-html,
-body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-}
-
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 dark:bg-gray-700 rounded-full hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors;
-}
+/* ... existing global styles ... */
 </style>

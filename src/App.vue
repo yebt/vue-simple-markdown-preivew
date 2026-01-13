@@ -40,8 +40,46 @@ const activeTab = ref<'editor' | 'preview'>('editor')
 
 const handleEditorScroll = () => {
   if (isScrolling.value) return
-  // ... existing scroll logic ...
-  // ... which I will fix in the next chunk ...
+
+  const editor = editorRef.value?.textarea
+  const preview = previewRef.value?.preview
+
+  if (editor && preview) {
+    isScrolling.value = true
+    const percentage = editor.scrollTop / (editor.scrollHeight - editor.clientHeight)
+    if (!isNaN(percentage)) {
+      preview.scrollTop = percentage * (preview.scrollHeight - preview.clientHeight)
+    }
+    setTimeout(() => (isScrolling.value = false), 100)
+  }
+}
+
+const handlePreviewScroll = () => {
+  if (isScrolling.value) return
+
+  const editor = editorRef.value?.textarea
+  const preview = previewRef.value?.preview
+
+  if (editor && preview) {
+    isScrolling.value = true
+    const percentage = preview.scrollTop / (preview.scrollHeight - preview.clientHeight)
+    if (!isNaN(percentage)) {
+      editor.scrollTop = percentage * (editor.scrollHeight - editor.clientHeight)
+    }
+    setTimeout(() => (isScrolling.value = false), 100)
+  }
+}
+
+const copyToClipboard = async () => {
+  if (!renderedHtml.value) return
+
+  try {
+    await navigator.clipboard.writeText(renderedHtml.value)
+    alert('¡HTML copiado al portapapeles!')
+  } catch (err) {
+    console.error('Error al copiar:', err)
+    alert('Error al copiar el contenido.')
+  }
 }
 </script>
 
@@ -115,5 +153,22 @@ const handleEditorScroll = () => {
 </template>
 
 <style>
-/* ... existing global styles ... */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 dark:bg-gray-700 rounded-full hover:bg-gray-400 dark:hover:bg-gray-600 transition-colors;
+}
 </style>
